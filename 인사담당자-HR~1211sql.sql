@@ -1,0 +1,122 @@
+/*
+단일행 함수 - 기타함수
+
+NVL(컬럼, 대체값)
+    NVL함수는 NULL값을 다른 값으로 변환한다.
+    지정된 컬럼의 값이 NULL이 아닌 경우에는 해당컬럼의 값을 반환한다.
+    해당 컬럼과 대체값은 데이터 타입이 동일한 타입이어야 한다.
+    
+NVL2(컬럼, 대체값1, 대체값2)
+    지정된 컬럼의 값이 NULL이 아니면 대체값1이 반환되고, NULL이면 대체값2가 반환된다.
+    대체값1과 대체값2는 데이터타입이 동일한 타입이어야 한다.
+*/
+
+-- 모든 직원의 아이디, 이름, 급여, 커미션을 조회한다.
+-- 커미션이 NULL이면 0을 반환한다.
+SELECT employee_id, first_name, salary, NVL(commission_pct, 0) COMM
+FROM employees;
+
+-- 모든 직원의 아이디, 이름, 급여, 커미션, 커미션이 포함된 급여를 조회하기
+-- 커미션이 포함된 급여 = 급여 +(급여*커미션)
+SELECT employee_id, first_name, salary, commission_pct,
+       salary + (salary*NVL(commission_pct, 0))
+FROM employees;
+
+-- 모든 부서의 부서아이디, 이름, 관리자아이디를 조회하기
+-- 단, 관리자가 지정되지 않은 부서는 '관리자없음'으로 조회하기
+SELECT department_id, department_name, NVL(TO_CHAR(manager_ID), '관리자없음')
+FROM departments;
+
+/*
+    단일행 함수 - 기타함수
+    
+    DECODE(컬럼, 비교값1, 값1,
+                비교값2, 값2,
+                비교값3, 값3,
+                기본값)
+    지정된 컬럼의 값이 비교값1과 같으면 값1이 반환된다.
+                   비교값2과 같으면 값1이 반환된다.
+                   비교값3과 같으면 값1이 반환된다.
+                   일치하는 값이 없으면 기본값이 반환된다.
+    *DECODE 함수는 컬럼의 값과 비교값 간의 equals 비교만 가능하다.
+
+CASE ~ WHEN 표현식
+    CASE 
+        WHEN 조건식1  THEN 값1
+        WHEN 조건식2  THEN 값2
+        WHEN 조건식3  THEN 값3
+        ELSE 값4
+    END
+    * 조건식이 TRUE로 판정되면 THEN의 값이 최종값이 된다.
+    * 모든 조건식이 FALSE로 판정되면 ELSE의 값4가 최종값이 된다.
+    * 조건식에서는 =, >, >=, <, <=, != 등의 다양한 연산자를 사용해서 조건식을 작성할 수 있다.
+    * DECODE함수에 비교했을 때 더 다양한 조건을 적용할 수 있다.
+    
+    CASE 컬럼
+        WHEN 비교값1  THEN 값1
+        WHEN 비교값2  THEN 값2
+        WHEN 비교값3  THEN 값3
+        ELSE 값4
+    END
+    * 지정된 컬럼의 값이 비교값들 중 하나와 일치하면 해당 THEN의 값이 최종값이 된다.
+    * 모든 비교값과 일치하지 않으면 ELSE의 값4가 최종값이 된다.
+    * DECODE 함수와 기능면에서 동일하다.
+*/
+
+-- 모든 직원테이블에서 급여가 5000이하면 보너스를 1000 지급하고, 
+--                 급여가 10000이하면 보너스를 2000 지급하고, 
+--                 그 외는 3000을 지급한다.
+-- 모든 직원에 대해서 직원아이디, 이름, 급여, 보너스를 조회하기
+SELECT employee_id, first_name, salary,
+    CASE
+        WHEN salary <= 5000 THEN 1000
+        WHEN salary <= 10000 THEN 2000
+        ELSE 3000
+    END BONUS
+FROM employees;
+
+-- 모든 직원에 대해서 부서아이디를 기준으로 팀을 지정하기,
+-- 10, 20, 30 부서는 A팀, 40, 50, 60 부서는 B팀, 그외는 C팀
+-- 직원아이디, 이름, 부서아이디, 팀명을 조회하기
+SELECT employee_id, first_name, department_id,
+    CASE
+        WHEN department_id IN (10, 20, 30) THEN 'A'
+        WHEN department_id IN (40, 50, 60) THEN 'B'
+        ElSE 'C'
+    END AS TEAM
+FROM employees;
+
+-- 지역테이블에서 지역아이디별로 지역명을 조회하기
+-- 1은 유럽, 2는 아메리카, 3은 아시아, 4는 아프리카 및 중동
+SELECT region_id,
+    CASE region_id
+        WHEN 1 THEN '유럽'
+        WHEN 2 THEN '아메리카'
+        WHEN 3 THEN '아시아'
+        WHEN 4 THEN '아프리카 및 중동'
+    END region_name
+FROM regions;
+
+-- DECODE를 이용해서 
+-- 지역테이블에서 지역아이디별로 지역명을 조회하기
+-- 1은 유럽, 2는 아메리카, 3은 아시아, 4는 아프리카 및 중동
+SELECT region_id,
+    DECODE(region_id, 1, '유럽',
+                      2, '아메리카',
+                      3, '아시아',
+                      4, '아프리카 및 중동') AS REGION_NAME
+FROM regions;
+
+-- 부서 테이블에서 부서아이디, 부서명, 관리자이름을 조회하기
+-- 관리자가 지정되어 있지 않으면 없음으로 조회한다.
+SELECT B.department_id, B.department_name,
+    CASE
+        WHEN MANAGER_id IS NOT NULL THEN (SELECT A.first_name
+                                            FROM employees A
+                                            WHERE A.employee_id = B.manager_id)
+        ELSE '없음'
+    END manager_name
+FROM departments B;
+
+
+        
